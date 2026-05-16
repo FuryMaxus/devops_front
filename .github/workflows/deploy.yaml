@@ -1,0 +1,63 @@
+name: CI/CD Frontend
+
+on:
+  push:
+    branches: [ "deploy" ]
+
+jobs:
+  build-push-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v3
+
+      - name: Configurar credenciales AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build y Push Frontend
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPO: front_ventas
+          IMAGE_TAG: latest
+          IP_MS1: ${{ secrets.PRIVATE_IP_MS_DESPACHO }}
+          IP_MS2: ${{ secrets.PRIVATE_IP_MS_VENTAS }}
+        run: |
+          docker build \
+            --build-arg MS_DESPACHO_PRIVATE_IP=$IP_MS1 \
+            --build-arg MS_VENTAS_PRIVATE_IP=$IP_MS2 \
+            -t frontend-temp .
+
+          docker tag frontend-temp:latest $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG
+      - name: Deploy Frontend vía SSM
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPO: front_ventas
+        run: |
+          aws ssm send-command \
+            --instance-ids ${{ secrets.EC2_INSTANCE_ID }} \
+            --document-name "AWS-RunShellScript" \
+            --comment "Actualizar Frontend" \
+            --parameters '{"commands":[
+              "set -e",
+              "echo Login ECR",
+              "aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin '${ECR_REGISTRY}'",
+              "echo Pull imagen",
+              "docker pull '${ECR_REGISTRY}'/'${ECR_REPO}':latest",
+              "docker stop frontend-app || true",
+              "docker rm frontend-app || true",
+              "docker network create ventas-net || true",
+              "docker run -d --name frontend-app --network ventas-net -p 80:80 '${ECR_REGISTRY}'/'${ECR_REPO}':latest",
+              "docker image prune -f"
+            ]}' \
+            --output text
