@@ -57,7 +57,7 @@ jobs:
               "docker stop frontend-app || true",
               "docker rm frontend-app || true",
               "docker network create ventas-net || true",
-              "docker run -d --name frontend-app --network ventas-net -p 80:8080 '${ECR_REGISTRY}'/'${ECR_REPO}':latest",
+              "docker run -d --restart always --name frontend-app --network ventas-net -p 80:8080 '${ECR_REGISTRY}'/'${ECR_REPO}':latest",
               "docker image prune -f"
             ]}' \
             --output text
