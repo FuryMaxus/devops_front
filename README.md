@@ -14,6 +14,11 @@ Flujo automatizado en la rama `deploy`:
 2. **Deploy con Docker Compose:** Utiliza **AWS SSM** para enviar el archivo `docker-compose.yaml` a la instancia EC2 y desplegar usando `docker compose up -d`, garantizando un despliegue limpio y sin tiempo de inactividad.
 
 ## 4. Instrucciones de Ejecución Local
-Para levantar el frontend localmente y que apunte a tus servicios:
+Para levantar el frontend localmente, cree un archivo `.env` en la raíz con el siguiente contenido:
+* `REGISTRY=local`
+* `REPO=front-ventas`
+* `IP_MS1=127.0.0.1` (IP del microservicio de Despacho)
+* `IP_MS2=127.0.0.1` (IP del microservicio de Ventas)
+Luego ejecute:
 ```bash
 docker compose up --build
