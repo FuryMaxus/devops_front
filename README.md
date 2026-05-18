@@ -12,13 +12,22 @@ Este repositorio contiene la interfaz de usuario desarrollada en React. Se despl
 Flujo automatizado en la rama `deploy`:
 1. **Build & Push:** Construye la imagen inyectando las IPs privadas de los microservicios mediante `--build-arg` y la sube a **Amazon ECR**.
 2. **Deploy con Docker Compose:** Utiliza **AWS SSM** para enviar el archivo `docker-compose.yaml` a la instancia EC2 y desplegar usando `docker compose up -d`, garantizando un despliegue limpio y sin tiempo de inactividad.
-
+### Es necesario definir las siguientes variables como secretos en el repositorio para el funcionamiento del pipeline:
+#### Se obtienen desde aws
+* `AWS_ACCESS_KEY_ID`
+* `AWS_SECRET_ACCESS_KEY`
+* `AWS_SESSION_TOKEN`
+* `EC2_INSTANCE_ID`
 ## 4. Instrucciones de Ejecución Local
 Para levantar el frontend localmente, cree un archivo `.env` en la raíz con el siguiente contenido:
+
+* `IP_MS1` (IP del microservicio de Despacho)
+* `IP_MS2` (IP del microservicio de Ventas)
+*` MS_VENTAS_PRIVATE_PORT`
+* `MS_DESPACHO_PRIVATE_PORT`
+#### opcionales
 * `REGISTRY=local`
 * `REPO=front-ventas`
-* `IP_MS1=127.0.0.1` (IP del microservicio de Despacho)
-* `IP_MS2=127.0.0.1` (IP del microservicio de Ventas)
 Luego ejecute:
 ```bash
 docker compose up --build
