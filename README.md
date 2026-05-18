@@ -23,7 +23,7 @@ Para levantar el frontend localmente, cree un archivo `.env` en la raíz con el 
 
 * `IP_MS1` (IP del microservicio de Despacho)
 * `IP_MS2` (IP del microservicio de Ventas)
-*` MS_VENTAS_PRIVATE_PORT`
+* ` MS_VENTAS_PRIVATE_PORT`
 * `MS_DESPACHO_PRIVATE_PORT`
 #### opcionales
 * `REGISTRY=local`
