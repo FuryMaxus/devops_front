@@ -8,6 +8,8 @@ RUN npm run build
 FROM nginx:stable-alpine
 ARG MS_DESPACHO_PRIVATE_IP
 ARG MS_VENTAS_PRIVATE_IP
+ARG MS_DESPACHO_PRIVATE_PORT
+ARG MS_VENTAS_PRIVATE_PORT
 RUN rm /etc/nginx/conf.d/default.conf
 RUN echo "server { \
     listen 8080; \
