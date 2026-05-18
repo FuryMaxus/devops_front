@@ -29,10 +29,11 @@ jobs:
           ECR_REPO: front_ventas
           IMAGE_TAG: latest
         run: |
-          # Usamos las IPs desde los secrets para el build
           docker build \
             --build-arg MS_DESPACHO_PRIVATE_IP=${{ secrets.PRIVATE_IP_MS_DESPACHO }} \
             --build-arg MS_VENTAS_PRIVATE_IP=${{ secrets.PRIVATE_IP_MS_VENTAS }} \
+            --build-arg MS_VENTAS_PRIVATE_PORT=${{ secrets.PRIVATE_PORT_MS_VENTAS }} \
+            --build-arg MS_DESPACHO_PRIVATE_PORT=${{ secrets.PRIVATE_PORT_MS_DESPACHO }} \
             -t $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG .
           
           docker push $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG
