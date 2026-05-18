@@ -7,10 +7,9 @@ on:
 jobs:
   build-push-deploy:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout código
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4 
 
       - name: Configurar credenciales AWS
         uses: aws-actions/configure-aws-credentials@v4
@@ -29,35 +28,37 @@ jobs:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPO: front_ventas
           IMAGE_TAG: latest
-          IP_MS1: ${{ secrets.PRIVATE_IP_MS_DESPACHO }}
-          IP_MS2: ${{ secrets.PRIVATE_IP_MS_VENTAS }}
         run: |
+          # Usamos las IPs desde los secrets para el build
           docker build \
-            --build-arg MS_DESPACHO_PRIVATE_IP=$IP_MS1 \
-            --build-arg MS_VENTAS_PRIVATE_IP=$IP_MS2 \
-            -t frontend-temp .
-
-          docker tag frontend-temp:latest $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG
+            --build-arg MS_DESPACHO_PRIVATE_IP=${{ secrets.PRIVATE_IP_MS_DESPACHO }} \
+            --build-arg MS_VENTAS_PRIVATE_IP=${{ secrets.PRIVATE_IP_MS_VENTAS }} \
+            -t $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG .
+          
           docker push $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG
-      - name: Deploy Frontend vía SSM
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPO: front_ventas
+
+      - name: Deploy Frontend vía SSM (Docker Compose)
         run: |
+          REGISTRY=${{ steps.login-ecr.outputs.registry }}
+          REPO=front_ventas
+          COMPOSE_B64=$(cat docker-compose.yaml | base64 -w 0)
+          
           aws ssm send-command \
             --instance-ids ${{ secrets.EC2_INSTANCE_ID }} \
             --document-name "AWS-RunShellScript" \
-            --comment "Actualizar Frontend" \
-            --parameters '{"commands":[
-              "set -e",
-              "echo Login ECR",
-              "aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin '${ECR_REGISTRY}'",
-              "echo Pull imagen",
-              "docker pull '${ECR_REGISTRY}'/'${ECR_REPO}':latest",
-              "docker stop frontend-app || true",
-              "docker rm frontend-app || true",
-              "docker network create ventas-net || true",
-              "docker run -d --name frontend-app --network ventas-net -p 80:80 '${ECR_REGISTRY}'/'${ECR_REPO}':latest",
-              "docker image prune -f"
-            ]}' \
+            --comment "Actualizar Frontend con Compose" \
+            --parameters "{\"commands\":[
+              \"set -e\",
+              \"mkdir -p /home/ssm-user/app-frontend\",
+              \"cd /home/ssm-user/app-frontend\",
+              \"echo $COMPOSE_B64 | base64 -d > docker-compose.yaml\",
+              \"aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $REGISTRY\",
+              \"export REGISTRY=$REGISTRY\",
+              \"export REPO=$REPO\",
+              \"export IP_MS1=${{ secrets.PRIVATE_IP_MS_DESPACHO }}\",
+              \"export IP_MS2=${{ secrets.PRIVATE_IP_MS_VENTAS }}\",
+              \"docker compose pull\",
+              \"docker compose up -d\",
+              \"docker image prune -f\"
+            ]}" \
             --output text
