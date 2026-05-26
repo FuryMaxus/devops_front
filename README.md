@@ -18,6 +18,8 @@ Flujo automatizado en la rama `deploy`:
 * `AWS_SECRET_ACCESS_KEY`
 * `AWS_SESSION_TOKEN`
 * `EC2_INSTANCE_ID`
+* `PRIVATE_IP_MS_DESPACHO`
+* `PRIVATE_IP_MS_VENTAS`
 ## 4. Instrucciones de Ejecución Local
 Para levantar el frontend localmente, cree un archivo `.env` en la raíz con el siguiente contenido:
 
