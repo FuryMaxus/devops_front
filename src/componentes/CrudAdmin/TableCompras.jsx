@@ -34,14 +34,13 @@ export const TableCompras = () => {
 
   return (
     <>
-      <p>aaaaaaaaaaaaaaa</p>
       <section className="grid text-center grid-cols-12 mb-8">
         <div className="col-span-12 flex justify-center">
           <div className="col-span-10 p-2 bg-white border border-gray-200 rounded-lg shadow dark:bg-white h-full overflow-hidden">
             <table className="table-fixed">
               <thead>
                 <tr className="py-10">
-                  <th className="pr-10">Orden de compra/th>
+                  <th className="pr-10">Orden de compraaaas</th>
                   <th className="pr-10">direccion</th>
                   <th className="pr-10">fecha de compra</th>
                   <th className="pr-10">valor total</th>
