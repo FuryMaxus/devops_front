@@ -6,10 +6,8 @@ COPY . .
 RUN npm run build
 
 FROM nginx:stable-alpine
-ARG MS_DESPACHO_PRIVATE_IP
-ARG MS_VENTAS_PRIVATE_IP
-ARG MS_DESPACHO_PRIVATE_PORT
-ARG MS_VENTAS_PRIVATE_PORT
+
+
 RUN rm /etc/nginx/conf.d/default.conf
 RUN echo "server { \
     listen 8080; \
@@ -23,14 +21,14 @@ RUN echo "server { \
     \
     # 2. Proxy Inverso para Microservicio 1 (Despachos) \
     location /api/v1/despachos { \
-        proxy_pass http://${MS_DESPACHO_PRIVATE_IP}:${MS_DESPACHO_PRIVATE_PORT:-8080}; \
+        proxy_pass http://backend-despacho-service:8080; \
         proxy_set_header Host \$host; \
         proxy_set_header X-Real-IP \$remote_addr; \
     } \
     \
     # 3. Proxy Inverso para Microservicio 2 (Ventas) \
     location /api/v1/ventas { \
-        proxy_pass http://${MS_VENTAS_PRIVATE_IP}:${MS_VENTAS_PRIVATE_PORT:-8080}; \
+        proxy_pass http://backend-ventas-service:8080; \
         proxy_set_header Host \$host; \
         proxy_set_header X-Real-IP \$remote_addr; \
     } \
