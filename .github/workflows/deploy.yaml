@@ -1,11 +1,11 @@
-name: CI/CD Frontend
+name: CI/CD Frontend a ECR
 
 on:
   push:
     branches: [ "deploy" ]
 
 jobs:
-  build-push-deploy:
+  build-push:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout código
@@ -17,7 +17,7 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          aws-region: us-east-1
 
       - name: Login Amazon ECR
         id: login-ecr
@@ -26,43 +26,8 @@ jobs:
       - name: Build y Push Frontend
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPO: front_ventas
+          ECR_REPO: innovatech-frontend
           IMAGE_TAG: latest
         run: |
-          docker build \
-            --build-arg MS_DESPACHO_PRIVATE_IP=${{ secrets.PRIVATE_IP_MS_DESPACHO }} \
-            --build-arg MS_VENTAS_PRIVATE_IP=${{ secrets.PRIVATE_IP_MS_VENTAS }} \
-            --build-arg MS_VENTAS_PRIVATE_PORT=${{ secrets.PRIVATE_PORT_MS_VENTAS }} \
-            --build-arg MS_DESPACHO_PRIVATE_PORT=${{ secrets.PRIVATE_PORT_MS_DESPACHO }} \
-            -t $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG .
-          
+          docker build -t $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG
-
-      - name: Deploy Frontend vía SSM (Docker Compose)
-        run: |
-          REGISTRY=${{ steps.login-ecr.outputs.registry }}
-          REPO=front_ventas
-          COMPOSE_B64=$(cat docker-compose.yaml | base64 -w 0)
-          
-          aws ssm send-command \
-            --instance-ids ${{ secrets.EC2_INSTANCE_ID }} \
-            --document-name "AWS-RunShellScript" \
-            --comment "Actualizar Frontend con Compose" \
-            --parameters "{\"commands\":[
-              \"set -e\",
-              \"mkdir -p /home/ssm-user/app-frontend\",
-              \"cd /home/ssm-user/app-frontend\",
-              \"echo $COMPOSE_B64 | base64 -d > docker-compose.yaml\",
-              \"aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $REGISTRY\",
-              \"echo REGISTRY=$REGISTRY > .env\",
-              \"echo REPO=$REPO >> .env\",
-              \"echo IP_MS1=${{ secrets.PRIVATE_IP_MS_DESPACHO }} >> .env\",
-              \"echo IP_MS2=${{ secrets.PRIVATE_IP_MS_VENTAS }} >> .env\",
-              \"echo PORT_MS1=${{ secrets.PRIVATE_PORT_MS_DESPACHO }} >> .env\",
-              \"echo PORT_MS2=${{ secrets.PRIVATE_PORT_MS_VENTAS }} >> .env\",
-              \"docker compose pull\",
-              \"docker compose down\",
-              \"docker compose --env-file .env up -d\",
-              \"docker image prune -f\"
-            ]}" \
-            --output text

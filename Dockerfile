@@ -23,14 +23,14 @@ RUN echo "server { \
     \
     # 2. Proxy Inverso para Microservicio 1 (Despachos) \
     location /api/v1/despachos { \
-        proxy_pass http://${MS_DESPACHO_PRIVATE_IP}:${MS_DESPACHO_PRIVATE_PORT:-8081}; \
+        proxy_pass http://${MS_DESPACHO_PRIVATE_IP}:${MS_DESPACHO_PRIVATE_PORT:-8080}; \
         proxy_set_header Host \$host; \
         proxy_set_header X-Real-IP \$remote_addr; \
     } \
     \
     # 3. Proxy Inverso para Microservicio 2 (Ventas) \
     location /api/v1/ventas { \
-        proxy_pass http://${MS_VENTAS_PRIVATE_IP}:${MS_VENTAS_PRIVATE_PORT:-8081}; \
+        proxy_pass http://${MS_VENTAS_PRIVATE_IP}:${MS_VENTAS_PRIVATE_PORT:-8080}; \
         proxy_set_header Host \$host; \
         proxy_set_header X-Real-IP \$remote_addr; \
     } \
