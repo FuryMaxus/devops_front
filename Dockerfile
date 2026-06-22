@@ -21,14 +21,14 @@ RUN echo "server { \
     \
     # 2. Proxy Inverso para Microservicio 1 (Despachos) \
     location /api/v1/despachos { \
-        proxy_pass http://backend-despacho-service:8080; \
+        proxy_pass http://backend-despacho-service.default.svc.cluster.local:8080; \
         proxy_set_header Host \$host; \
         proxy_set_header X-Real-IP \$remote_addr; \
     } \
     \
     # 3. Proxy Inverso para Microservicio 2 (Ventas) \
     location /api/v1/ventas { \
-        proxy_pass http://backend-ventas-service:8080; \
+        proxy_pass http://backend-ventas-service.default.svc.cluster.local:8080; \
         proxy_set_header Host \$host; \
         proxy_set_header X-Real-IP \$remote_addr; \
     } \
